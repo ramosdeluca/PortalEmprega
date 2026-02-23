@@ -17,6 +17,26 @@ export default function JobDetail() {
     }
   }, [id]);
 
+  const handleShare = async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: `Vaga: ${job?.title}`,
+          text: `Confira esta vaga de ${job?.title} na empresa ${job?.company_name}.\n\nAcesse o link para ver os detalhes e se candidatar:\n`,
+          url: window.location.href,
+        });
+      } else {
+        const shareText = `Confira esta vaga de ${job?.title} na empresa ${job?.company_name}\n\nLink: ${window.location.href}`;
+        await navigator.clipboard.writeText(shareText);
+        alert('Informações da vaga copiadas com sucesso! Cole na conversa para compartilhar.');
+      }
+    } catch (error) {
+      if ((error as Error).name !== 'AbortError') {
+        console.error('Erro ao compartilhar:', error);
+      }
+    }
+  };
+
   if (loading) return <div className="text-center py-20">Carregando...</div>;
   if (!job) return <div className="text-center py-20">Vaga não encontrada.</div>;
 
@@ -92,7 +112,10 @@ export default function JobDetail() {
               >
                 Candidatar-se Agora
               </Link>
-              <button className="w-full bg-zinc-50 text-zinc-900 py-4 rounded-2xl font-bold hover:bg-zinc-100 transition-all flex items-center justify-center gap-2">
+              <button
+                onClick={handleShare}
+                className="w-full bg-zinc-50 text-zinc-900 py-4 rounded-2xl font-bold hover:bg-zinc-100 transition-all flex items-center justify-center gap-2"
+              >
                 <Share2 className="w-4 h-4" /> Compartilhar
               </button>
             </div>

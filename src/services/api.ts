@@ -54,7 +54,7 @@ export const api = {
     updateMe: async (companyData: any) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
-      
+
       const { data, error } = await supabase
         .from('companies')
         .update(companyData)
@@ -112,9 +112,9 @@ export const api = {
         .from('jobs')
         .select('id')
         .eq('company_id', user.id);
-      
+
       const jobIds = jobs?.map(j => j.id) || [];
-      
+
       const { count: totalCandidatos } = await supabase
         .from('candidates')
         .select('*', { count: 'exact', head: true })
@@ -214,7 +214,7 @@ export const api = {
     createJob: async (jobData: any) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
-      
+
       const { data, error } = await supabase
         .from('jobs')
         .insert([{ ...jobData, company_id: user.id }])
@@ -298,7 +298,7 @@ export const api = {
 
       const { data, error } = await query.order('created_at', { ascending: false });
       if (error) throw error;
-      
+
       return data.map(job => ({
         ...job,
         company_name: (job.companies as any).name,
@@ -312,7 +312,7 @@ export const api = {
         .eq('id', id)
         .single();
       if (error) throw error;
-      
+
       return {
         ...data,
         company_name: (data.companies as any).name,
@@ -322,11 +322,23 @@ export const api = {
       };
     },
     apply: async (jobId: string, formData: any, resumeFile?: File) => {
-      // 1. Fetch job and company info for notification
+      // 1. Verify if candidate already applied for this job with this email
+      const { data: existingCandidate } = await supabase
+        .from('candidates')
+        .select('id')
+        .eq('job_id', parseInt(jobId))
+        .eq('email', formData.email)
+        .maybeSingle();
+
+      if (existingCandidate) {
+        throw new Error('Você já se candidatou à esta vaga. Aguarde o contato da empresa.');
+      }
+
+      // 2. Fetch job and company info for notification
       const job = await api.jobs.get(jobId);
-      
+
       let resume_url = null;
-      
+
       if (resumeFile) {
         try {
           const fileExt = resumeFile.name.split('.').pop();
@@ -345,7 +357,7 @@ export const api = {
           const { data: { publicUrl } } = supabase.storage
             .from('resumes')
             .getPublicUrl(filePath);
-          
+
           resume_url = publicUrl;
         } catch (err: any) {
           console.error('Resume upload failed:', err);
@@ -361,10 +373,11 @@ export const api = {
           name: formData.name,
           phone: formData.phone,
           email: formData.email,
+          linkedin: formData.linkedin,
           message: formData.message,
           resume_url
         }]);
-      
+
       if (error) {
         console.error('Candidate Insert Error:', error);
         throw error;

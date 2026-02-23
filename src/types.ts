@@ -33,6 +33,7 @@ export interface Candidate {
   name: string;
   phone: string;
   email: string;
+  linkedin?: string;
   resume_url: string;
   message: string;
   created_at: string;

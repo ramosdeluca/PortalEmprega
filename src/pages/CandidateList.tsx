@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  Users, Mail, Phone, FileText, MessageCircle, 
+import {
+  Users, Mail, Phone, FileText, MessageCircle,
   Calendar, ArrowLeft, ExternalLink, MessageSquare,
-  Clock, CheckCircle, X, Loader2
+  Clock, CheckCircle, X, Loader2, Linkedin
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { api } from '../services/api';
@@ -20,7 +20,7 @@ export default function CandidateList() {
   const [isInterviewModalOpen, setIsInterviewModalOpen] = useState(false);
   const [isEditingInterview, setIsEditingInterview] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  
+
   const [interviewData, setInterviewData] = useState({
     date: '',
     time: '',
@@ -91,9 +91,9 @@ export default function CandidateList() {
         (interviewData.notes ? `📍 *Observações:* ${interviewData.notes}\n\n` : '\n') +
         `Poderia confirmar o recebimento desta mensagem?`
       );
-      
+
       const whatsappUrl = `https://wa.me/${selectedCandidate.phone.replace(/\D/g, '')}?text=${message}`;
-      
+
       setIsInterviewModalOpen(false);
       setIsEditingInterview(false);
       setInterviewData({ date: '', time: '', notes: '' });
@@ -108,7 +108,7 @@ export default function CandidateList() {
 
   const handleDeleteInterview = async () => {
     if (!currentInterview) return;
-    
+
     setIsDeleting(true);
     try {
       const interviewId = Number(currentInterview.id);
@@ -157,9 +157,8 @@ export default function CandidateList() {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: i * 0.05 }}
-              className={`p-6 bg-white rounded-3xl border transition-all cursor-pointer group ${
-                selectedCandidate?.id === candidate.id ? 'border-emerald-500 shadow-md ring-1 ring-emerald-500' : 'border-zinc-100 shadow-sm hover:shadow-md'
-              }`}
+              className={`p-6 bg-white rounded-3xl border transition-all cursor-pointer group ${selectedCandidate?.id === candidate.id ? 'border-emerald-500 shadow-md ring-1 ring-emerald-500' : 'border-zinc-100 shadow-sm hover:shadow-md'
+                }`}
               onClick={() => setSelectedCandidate(candidate)}
             >
               <div className="flex items-center gap-6">
@@ -176,6 +175,9 @@ export default function CandidateList() {
                   <div className="flex flex-wrap gap-4 text-sm text-zinc-500">
                     <span className="flex items-center gap-1.5"><Mail className="w-4 h-4" /> {candidate.email}</span>
                     <span className="flex items-center gap-1.5"><Phone className="w-4 h-4" /> {candidate.phone}</span>
+                    {candidate.linkedin && (
+                      <span className="flex items-center gap-1.5"><Linkedin className="w-4 h-4" /> Linkedin</span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -223,7 +225,7 @@ export default function CandidateList() {
                     >
                       <MessageCircle className="w-5 h-5" /> WhatsApp
                     </a>
-                    
+
                     {currentInterview ? (
                       <div className="p-6 bg-zinc-900 text-white rounded-3xl space-y-4">
                         <div className="flex items-center justify-between">
@@ -233,13 +235,13 @@ export default function CandidateList() {
                           <div className="flex gap-2">
                             {isDeleting ? (
                               <div className="flex items-center gap-2">
-                                <button 
+                                <button
                                   onClick={handleDeleteInterview}
                                   className="px-3 py-1 bg-red-500 text-white text-[10px] font-bold rounded-lg hover:bg-red-600 transition-colors"
                                 >
                                   Confirmar?
                                 </button>
-                                <button 
+                                <button
                                   onClick={() => setIsDeleting(false)}
                                   className="p-1 hover:bg-white/10 rounded-lg text-zinc-400"
                                 >
@@ -248,14 +250,14 @@ export default function CandidateList() {
                               </div>
                             ) : (
                               <>
-                                <button 
+                                <button
                                   onClick={openEditInterview}
                                   className="p-2 hover:bg-white/10 rounded-lg transition-colors text-zinc-400 hover:text-white"
                                   title="Editar"
                                 >
                                   <FileText className="w-4 h-4" />
                                 </button>
-                                <button 
+                                <button
                                   onClick={() => setIsDeleting(true)}
                                   className="p-2 hover:bg-red-500/20 rounded-lg transition-colors text-zinc-400 hover:text-red-400"
                                   title="Cancelar"
@@ -303,6 +305,16 @@ export default function CandidateList() {
                         className="flex items-center justify-center gap-2 bg-zinc-50 text-zinc-900 py-4 rounded-2xl font-bold hover:bg-zinc-100 transition-all border border-zinc-200"
                       >
                         <FileText className="w-5 h-5" /> Ver Currículo
+                      </a>
+                    )}
+                    {selectedCandidate.linkedin && (
+                      <a
+                        href={selectedCandidate.linkedin.startsWith('http') ? selectedCandidate.linkedin : `https://${selectedCandidate.linkedin}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-2 bg-[#0A66C2] text-white py-4 rounded-2xl font-bold hover:bg-[#004182] transition-all shadow-lg shadow-blue-200"
+                      >
+                        <Linkedin className="w-5 h-5 fill-current" /> Ver Perfil no LinkedIn
                       </a>
                     )}
                   </div>

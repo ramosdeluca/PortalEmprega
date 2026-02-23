@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { User, Phone, Mail, FileText, MessageSquare, Send, CheckCircle, ArrowLeft } from 'lucide-react';
+import { User, Phone, Mail, FileText, MessageSquare, Send, CheckCircle, ArrowLeft, AlertCircle, Linkedin } from 'lucide-react';
 import { motion } from 'motion/react';
 import { api } from '../services/api';
 import { Job } from '../types';
@@ -11,11 +11,13 @@ export default function Apply() {
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  
+  const [error, setError] = useState('');
+
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
     email: '',
+    linkedin: '',
     message: '',
   });
   const [resume, setResume] = useState<File | null>(null);
@@ -29,23 +31,26 @@ export default function Apply() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!id) return;
-    
+    setError('');
+
     // File size validation (500KB)
     if (resume && resume.size > 500 * 1024) {
-      alert('O arquivo do currículo excede o tamanho máximo permitido de 500KB. Por favor, envie um arquivo menor.');
+      setError('O arquivo do currículo excede o tamanho máximo permitido de 500KB. Por favor, envie um arquivo menor.');
       return;
     }
-    
+
     setLoading(true);
     try {
       await api.jobs.apply(id, formData, resume || undefined);
       setSuccess(true);
-    } catch (error: any) {
-      console.error(error);
-      if (error.message?.includes('exceeded the maximum allowed size')) {
-        alert('Erro: O arquivo enviado é muito grande (máximo 500KB).');
+    } catch (err: any) {
+      console.error(err);
+      if (err.message?.includes('exceeded the maximum allowed size')) {
+        setError('Erro: O arquivo enviado é muito grande (máximo 500KB).');
+      } else if (err.message?.includes('já se candidatou')) {
+        setError(err.message);
       } else {
-        alert(`Erro ao enviar candidatura: ${error.message || 'Tente novamente.'}`);
+        setError(`Erro ao enviar candidatura: ${err.message || 'Tente novamente.'}`);
       }
     } finally {
       setLoading(false);
@@ -89,6 +94,13 @@ export default function Apply() {
             Você está se candidatando para: <span className="font-bold text-zinc-900">{job?.title}</span> em <span className="font-bold text-zinc-900">{job?.company_name}</span>
           </p>
         </div>
+
+        {error && (
+          <div className="p-4 bg-red-50 border border-red-100 text-red-600 rounded-2xl flex items-center gap-3 text-sm">
+            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">
@@ -139,6 +151,20 @@ export default function Apply() {
             </div>
 
             <div className="space-y-2">
+              <label className="text-sm font-bold text-zinc-700">LinkedIn (Opcional)</label>
+              <div className="relative">
+                <Linkedin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
+                <input
+                  type="url"
+                  className="w-full pl-12 pr-4 py-3 bg-zinc-50 border border-zinc-100 rounded-2xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all"
+                  placeholder="https://linkedin.com/in/seu-perfil"
+                  value={formData.linkedin}
+                  onChange={(e) => setFormData({ ...formData, linkedin: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
               <label className="text-sm font-bold text-zinc-700">Currículo (PDF ou DOC - Máx 500KB)</label>
               <div className="relative">
                 <div className="flex items-center justify-center w-full">
@@ -183,7 +209,7 @@ export default function Apply() {
             {loading ? 'Enviando...' : <><Send className="w-5 h-5" /> Enviar Candidatura</>}
           </button>
         </form>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 }

@@ -93,7 +93,7 @@ export default function Signup() {
       const { confirmPassword, confirmEmail, ...registerData } = formData;
       // Normalize CNPJ to numbers only to avoid format conflicts
       registerData.cnpj = registerData.cnpj.replace(/\D/g, '');
-      
+
       const data = await api.auth.register(registerData);
       if (data.user) {
         navigate('/company/subscription');
@@ -101,7 +101,12 @@ export default function Signup() {
         setError('Erro ao cadastrar empresa');
       }
     } catch (err: any) {
-      setError(err.message || 'Erro de conexão. Tente novamente.');
+      const errorMessage = err.message || '';
+      if (errorMessage.includes('Database error saving new user') || errorMessage.includes('already registered')) {
+        setError('E-mail ou CNPJ já está cadastrado em nossa base.');
+      } else {
+        setError(errorMessage || 'Erro de conexão. Tente novamente.');
+      }
     } finally {
       setLoading(false);
     }
