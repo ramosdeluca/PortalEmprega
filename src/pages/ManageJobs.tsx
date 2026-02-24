@@ -1,16 +1,20 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
-  Briefcase, Users, Edit, Power, PowerOff, 
-  ChevronRight, Search, Filter, ArrowLeft, 
-  MoreVertical, CheckCircle, XCircle 
+import {
+  Briefcase, Users, Edit, Power, PowerOff,
+  ChevronRight, Search, Filter, ArrowLeft,
+  MoreVertical, CheckCircle, XCircle, Zap
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { api } from '../services/api';
 import { Job } from '../types';
 
+interface JobWithPotentialCount extends Job {
+  potentialCandidatesCount?: number;
+}
+
 export default function ManageJobs() {
-  const [jobs, setJobs] = useState<Job[]>([]);
+  const [jobs, setJobs] = useState<JobWithPotentialCount[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -21,7 +25,18 @@ export default function ManageJobs() {
   const fetchJobs = async () => {
     try {
       const data = await api.company.getJobs();
-      setJobs(data);
+
+      const jobsWithCounts = await Promise.all(data.map(async (job) => {
+        try {
+          // Buscamos a contagem para cada vaga do usuário
+          const potential = await api.company.getPotentialCandidates(job.title, job.cbo_name, job.id);
+          return { ...job, potentialCandidatesCount: potential.length };
+        } catch (e) {
+          return { ...job, potentialCandidatesCount: 0 };
+        }
+      }));
+
+      setJobs(jobsWithCounts);
     } catch (error) {
       console.error(error);
     } finally {
@@ -83,11 +98,10 @@ export default function ManageJobs() {
                     </div>
                   </td>
                   <td className="px-8 py-6">
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
-                      job.status === 'active' 
-                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' 
-                        : 'bg-zinc-100 text-zinc-500 border border-zinc-200'
-                    }`}>
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${job.status === 'active'
+                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                      : 'bg-zinc-100 text-zinc-500 border border-zinc-200'
+                      }`}>
                       {job.status === 'active' ? (
                         <><CheckCircle className="w-3 h-3" /> Ativa</>
                       ) : (
@@ -96,14 +110,30 @@ export default function ManageJobs() {
                     </span>
                   </td>
                   <td className="px-8 py-6">
-                    <Link 
-                      to={`/company/jobs/${job.id}/candidates`}
-                      className="inline-flex items-center gap-2 text-sm font-bold text-zinc-900 hover:text-emerald-600 transition-colors"
-                    >
-                      <Users className="w-4 h-4 text-zinc-400" />
-                      Ver Candidatos
-                      <ChevronRight className="w-4 h-4" />
-                    </Link>
+                    <div className="flex flex-col gap-3">
+                      <Link
+                        to={`/company/jobs/${job.id}/candidates`}
+                        className="inline-flex items-center gap-2 text-sm font-bold text-zinc-900 hover:text-emerald-600 transition-colors"
+                      >
+                        <Users className="w-4 h-4 text-zinc-400" />
+                        Ver Candidatos
+                        <ChevronRight className="w-4 h-4" />
+                      </Link>
+
+                      {(job.potentialCandidatesCount ?? 0) > 0 && (
+                        <Link
+                          to={`/company/jobs/${job.id}/potential-candidates`}
+                          className="inline-flex items-center gap-2 text-sm font-bold text-amber-600 hover:text-amber-700 transition-colors bg-amber-50 px-2.5 py-1.5 rounded-lg w-fit"
+                        >
+                          <Zap className="w-4 h-4" />
+                          Possíveis Candidatos
+                          <span className="bg-amber-100 text-amber-800 text-xs px-1.5 py-0.5 rounded-full ml-1">
+                            {job.potentialCandidatesCount}
+                          </span>
+                          <ChevronRight className="w-4 h-4" />
+                        </Link>
+                      )}
+                    </div>
                   </td>
                   <td className="px-8 py-6 text-sm text-zinc-500">
                     {new Date(job.created_at).toLocaleDateString()}
@@ -113,11 +143,10 @@ export default function ManageJobs() {
                       <button
                         onClick={() => toggleStatus(job.id, job.status)}
                         title={job.status === 'active' ? 'Encerrar Vaga' : 'Reativar Vaga'}
-                        className={`p-2 rounded-xl border transition-all ${
-                          job.status === 'active'
-                            ? 'bg-zinc-50 border-zinc-200 text-zinc-600 hover:bg-red-50 hover:border-red-200 hover:text-red-600'
-                            : 'bg-emerald-50 border-emerald-200 text-emerald-600 hover:bg-emerald-100'
-                        }`}
+                        className={`p-2 rounded-xl border transition-all ${job.status === 'active'
+                          ? 'bg-zinc-50 border-zinc-200 text-zinc-600 hover:bg-red-50 hover:border-red-200 hover:text-red-600'
+                          : 'bg-emerald-50 border-emerald-200 text-emerald-600 hover:bg-emerald-100'
+                          }`}
                       >
                         {job.status === 'active' ? <PowerOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}
                       </button>
@@ -131,7 +160,7 @@ export default function ManageJobs() {
             </tbody>
           </table>
         </div>
-        
+
         {jobs.length === 0 && (
           <div className="text-center py-20 space-y-4">
             <div className="w-16 h-16 bg-zinc-50 rounded-full flex items-center justify-center mx-auto">

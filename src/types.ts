@@ -48,6 +48,19 @@ export interface Interview {
   created_at: string;
 }
 
+export interface CandidateProfile {
+  id: string;
+  name: string;
+  email: string;
+  whatsapp?: string;
+  current_occupation?: string;
+  availability?: string;
+  resume_url?: string;
+  linkedin?: string;
+  about_me?: string;
+  created_at: string;
+}
+
 export interface CBO {
   codigo: string;
   nome: string;

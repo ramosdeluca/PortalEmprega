@@ -9,11 +9,13 @@ export default function JobDetail() {
   const { id } = useParams();
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
+  const [hasApplied, setHasApplied] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     if (id) {
       api.jobs.get(id).then(setJob).finally(() => setLoading(false));
+      api.jobs.checkMyApplication(id).then(setHasApplied);
     }
   }, [id]);
 
@@ -106,12 +108,18 @@ export default function JobDetail() {
         <aside className="space-y-6">
           <div className="bg-white p-8 rounded-[2.5rem] border border-zinc-100 shadow-sm space-y-6 sticky top-24">
             <div className="space-y-4">
-              <Link
-                to={`/jobs/${job.id}/apply`}
-                className="block w-full bg-emerald-600 text-white text-center py-4 rounded-2xl font-bold hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200"
-              >
-                Candidatar-se Agora
-              </Link>
+              {hasApplied ? (
+                <div className="block w-full bg-zinc-100 text-zinc-500 text-center py-4 rounded-2xl font-bold cursor-not-allowed border border-zinc-200">
+                  Você já se candidatou
+                </div>
+              ) : (
+                <Link
+                  to={`/jobs/${job.id}/apply`}
+                  className="block w-full bg-emerald-600 text-white text-center py-4 rounded-2xl font-bold hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200"
+                >
+                  Candidatar-se Agora
+                </Link>
+              )}
               <button
                 onClick={handleShare}
                 className="w-full bg-zinc-50 text-zinc-900 py-4 rounded-2xl font-bold hover:bg-zinc-100 transition-all flex items-center justify-center gap-2"

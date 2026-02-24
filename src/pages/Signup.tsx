@@ -94,7 +94,7 @@ export default function Signup() {
       // Normalize CNPJ to numbers only to avoid format conflicts
       registerData.cnpj = registerData.cnpj.replace(/\D/g, '');
 
-      const data = await api.auth.register(registerData);
+      const data = await api.auth.register({ ...registerData, role: 'company' });
       if (data.user) {
         navigate('/company/subscription');
       } else {

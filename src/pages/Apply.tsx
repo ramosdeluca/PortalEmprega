@@ -11,6 +11,7 @@ export default function Apply() {
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [hasApplied, setHasApplied] = useState(false);
   const [error, setError] = useState('');
 
   const [formData, setFormData] = useState({
@@ -21,11 +22,38 @@ export default function Apply() {
     message: '',
   });
   const [resume, setResume] = useState<File | null>(null);
+  const [profileResumeUrl, setProfileResumeUrl] = useState<string>('');
 
   useEffect(() => {
     if (id) {
       api.jobs.get(id).then(setJob);
+      api.jobs.checkMyApplication(id).then(setHasApplied);
     }
+
+    const loadCandidateData = async () => {
+      try {
+        const role = await api.auth.getUserRole();
+        if (role === 'candidate') {
+          const profile = await api.candidate.getMe();
+          if (profile) {
+            setFormData(prev => ({
+              ...prev,
+              name: profile.name || '',
+              email: profile.email || '',
+              phone: profile.whatsapp || '',
+              linkedin: profile.linkedin || '',
+            }));
+            if (profile.resume_url) {
+              setProfileResumeUrl(profile.resume_url);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('User not logged in or error fetching profile:', err);
+      }
+    };
+
+    loadCandidateData();
   }, [id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -39,9 +67,14 @@ export default function Apply() {
       return;
     }
 
+    if (!resume && !profileResumeUrl) {
+      setError('Por favor, envie um currículo.');
+      return;
+    }
+
     setLoading(true);
     try {
-      await api.jobs.apply(id, formData, resume || undefined);
+      await api.jobs.apply(id, formData, resume || undefined, profileResumeUrl);
       setSuccess(true);
     } catch (err: any) {
       console.error(err);
@@ -56,6 +89,30 @@ export default function Apply() {
       setLoading(false);
     }
   };
+
+  if (hasApplied) {
+    return (
+      <div className="max-w-xl mx-auto py-20 text-center space-y-6">
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          className="w-20 h-20 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto"
+        >
+          <AlertCircle className="w-10 h-10" />
+        </motion.div>
+        <h1 className="text-3xl font-bold text-zinc-900">Inscrição já realizada</h1>
+        <p className="text-zinc-600">
+          Você já enviou suas informações para a vaga <strong>{job?.title}</strong> na empresa <strong>{job?.company_name}</strong>. Aguarde o contato.
+        </p>
+        <button
+          onClick={() => navigate('/jobs')}
+          className="bg-zinc-900 text-white px-8 py-3 rounded-xl font-bold hover:bg-zinc-800 transition-all"
+        >
+          Explorar outras vagas
+        </button>
+      </div>
+    );
+  }
 
   if (success) {
     return (
@@ -171,8 +228,17 @@ export default function Apply() {
                   <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-zinc-200 border-dashed rounded-2xl cursor-pointer bg-zinc-50 hover:bg-zinc-100 transition-all">
                     <div className="flex flex-col items-center justify-center pt-5 pb-6">
                       <FileText className="w-8 h-8 text-zinc-400 mb-2" />
-                      <p className="text-sm text-zinc-500">
-                        {resume ? <span className="text-emerald-600 font-bold">{resume.name}</span> : 'Clique para fazer upload ou arraste'}
+                      <p className="text-sm text-center text-zinc-500 px-4">
+                        {resume ? (
+                          <span className="text-emerald-600 font-bold">{resume.name}</span>
+                        ) : profileResumeUrl ? (
+                          <>
+                            <span className="text-emerald-600 font-bold block mb-1">Currículo do Perfil Anexado</span>
+                            <span className="text-xs">Clique para enviar um arquivo diferente</span>
+                          </>
+                        ) : (
+                          'Clique para fazer upload ou arraste'
+                        )}
                       </p>
                     </div>
                     <input

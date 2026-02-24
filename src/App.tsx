@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { Briefcase, Building2, LayoutDashboard, LogOut, Menu, X, Search, MapPin, Users, PlusCircle, CheckCircle, Clock, MessageCircle, Calendar } from 'lucide-react';
+import { Briefcase, Building2, LayoutDashboard, LogOut, Menu, X, Search, MapPin, Users, PlusCircle, CheckCircle, Clock, MessageCircle, Calendar, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 // Pages
@@ -10,11 +10,14 @@ import JobDetail from './pages/JobDetail';
 import Apply from './pages/Apply';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import SignupCandidate from './pages/SignupCandidate';
 import Subscription from './pages/Subscription';
 import Dashboard from './pages/Dashboard';
+import CandidateDashboard from './pages/CandidateDashboard';
 import CreateJob from './pages/CreateJob';
 import ManageJobs from './pages/ManageJobs';
 import CandidateList from './pages/CandidateList';
+import PotentialCandidatesList from './pages/PotentialCandidatesList';
 import Settings from './pages/Settings';
 
 import { api } from './services/api';
@@ -25,19 +28,34 @@ function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [company, setCompany] = useState<any>(null);
+  const [candidate, setCandidate] = useState<any>(null);
+
+  const fetchUserData = async () => {
+    const role = await api.auth.getUserRole();
+    if (role === 'candidate') {
+      const data = await api.candidate.getMe();
+      setCandidate(data);
+      setCompany(null);
+    } else {
+      const data = await api.company.getMe();
+      setCompany(data);
+      setCandidate(null);
+    }
+  };
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        api.company.getMe().then(setCompany);
+        fetchUserData();
       }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
-        api.company.getMe().then(setCompany);
+        fetchUserData();
       } else {
         setCompany(null);
+        setCandidate(null);
       }
     });
 
@@ -69,23 +87,39 @@ function Navbar() {
             <Link to="/jobs" className="text-zinc-600 hover:text-emerald-600 px-3 py-2 text-sm font-medium transition-colors">
               Ver Vagas
             </Link>
-            
-            {!company ? (
+            {!company && !candidate ? (
               <>
+                <Link to="/signup-candidate" className="text-zinc-600 hover:text-emerald-600 px-3 py-2 text-sm font-medium transition-colors">
+                  Sou Interessado
+                </Link>
                 <Link to="/login" className="text-zinc-600 hover:text-emerald-600 px-3 py-2 text-sm font-medium transition-colors">
-                  Login Empresa
+                  Login
                 </Link>
                 <Link to="/signup" className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors shadow-sm">
                   Sou Empresa
                 </Link>
               </>
-            ) : (
+            ) : company ? (
               <>
                 <Link to="/company/dashboard" className="flex items-center gap-2 text-zinc-600 hover:text-emerald-600 px-3 py-2 text-sm font-medium transition-colors">
                   <LayoutDashboard className="w-4 h-4" />
-                  Painel
+                  Painel Empresa
                 </Link>
-                <button 
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 text-zinc-600 hover:text-red-600 px-3 py-2 text-sm font-medium transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Sair
+                </button>
+              </>
+            ) : (
+              <>
+                <Link to="/candidate/dashboard" className="flex items-center gap-2 text-zinc-600 hover:text-emerald-600 px-3 py-2 text-sm font-medium transition-colors">
+                  <User className="w-4 h-4" />
+                  Meu Currículo
+                </Link>
+                <button
                   onClick={handleLogout}
                   className="flex items-center gap-2 text-zinc-600 hover:text-red-600 px-3 py-2 text-sm font-medium transition-colors"
                 >
@@ -161,17 +195,20 @@ export default function App() {
             <Route path="/jobs/:id/apply" element={<Apply />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
-            
-            {/* Company Routes */}
+            <Route path="/signup-candidate" element={<SignupCandidate />} />
+
+            {/* Candidate Routes */}
+            <Route path="/candidate/dashboard" element={<CandidateDashboard />} />
             <Route path="/company/subscription" element={<Subscription />} />
             <Route path="/company/dashboard" element={<Dashboard />} />
             <Route path="/company/jobs/new" element={<CreateJob />} />
             <Route path="/company/jobs" element={<ManageJobs />} />
             <Route path="/company/jobs/:id/candidates" element={<CandidateList />} />
+            <Route path="/company/jobs/:id/potential-candidates" element={<PotentialCandidatesList />} />
             <Route path="/company/settings" element={<Settings />} />
           </Routes>
         </main>
-        
+
         <footer className="bg-white border-t border-zinc-200 py-12 mt-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <div className="flex items-center justify-center gap-2 mb-4">

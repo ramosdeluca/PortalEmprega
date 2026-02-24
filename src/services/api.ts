@@ -19,13 +19,72 @@ export const api = {
             name: data.name,
             cnpj: data.cnpj,
             whatsapp: data.whatsapp,
+            role: data.role || 'company',
           }
         }
       });
       if (error) throw error;
       return authData;
     },
+    getUserRole: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      return user?.user_metadata?.role || 'company';
+    },
     signOut: () => supabase.auth.signOut(),
+  },
+  candidate: {
+    getMe: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      const { data, error } = await supabase
+        .from('candidate_profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+      if (error && error.code !== 'PGRST116') throw error;
+      return data;
+    },
+    updateMe: async (candidateData: any) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { data, error } = await supabase
+        .from('candidate_profiles')
+        .update(candidateData)
+        .eq('id', user.id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    uploadResume: async (file: File) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `resumes/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('resumes')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('resumes')
+        .getPublicUrl(filePath);
+
+      const { data, error: updateError } = await supabase
+        .from('candidate_profiles')
+        .update({ resume_url: publicUrl })
+        .eq('id', user.id)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+      return data;
+    },
   },
   company: {
     getMe: async () => {
@@ -242,6 +301,34 @@ export const api = {
       if (error) throw error;
       return data;
     },
+    getPotentialCandidates: async (jobTitle: string, cboName: string, jobId?: number) => {
+      let appliedEmails: string[] = [];
+      if (jobId) {
+        const { data: appliedCandidates } = await supabase
+          .from('candidates')
+          .select('email')
+          .eq('job_id', jobId);
+        appliedEmails = appliedCandidates?.map(c => c.email) || [];
+      }
+
+      const titleWord = jobTitle.split(' ')[0];
+      const cboWord = cboName ? cboName.split(' ')[0] : '';
+
+      let query = supabase.from('candidate_profiles').select('*');
+
+      const conditions = [];
+      if (titleWord) conditions.push(`current_occupation.ilike.%${titleWord}%`);
+      if (cboWord) conditions.push(`current_occupation.ilike.%${cboWord}%`);
+
+      if (conditions.length > 0) {
+        query = query.or(conditions.join(','));
+      }
+
+      const { data, error } = await query.limit(100);
+      if (error) throw error;
+
+      return data.filter(c => !appliedEmails.includes(c.email)).slice(0, 50);
+    },
     scheduleInterview: async (interviewData: any) => {
       const { data, error } = await supabase
         .from('interviews')
@@ -250,6 +337,35 @@ export const api = {
         .single();
       if (error) throw error;
       return data;
+    },
+    schedulePotentialCandidateInterview: async (jobId: string, candidate: any, interviewData: any) => {
+      const { data: newCandidate, error: candidateError } = await supabase
+        .from('candidates')
+        .insert([{
+          job_id: parseInt(jobId),
+          name: candidate.name,
+          email: candidate.email,
+          phone: candidate.whatsapp || '',
+          resume_url: candidate.resume_url,
+          linkedin: candidate.linkedin,
+          message: 'Convidado pela empresa (Match)'
+        }])
+        .select()
+        .single();
+      if (candidateError) throw candidateError;
+
+      const { data: interview, error: interviewError } = await supabase
+        .from('interviews')
+        .insert([{
+          candidate_id: newCandidate.id,
+          date: interviewData.date,
+          time: interviewData.time,
+          notes: interviewData.notes
+        }])
+        .select()
+        .single();
+      if (interviewError) throw interviewError;
+      return interview;
     },
     getInterviewByCandidate: async (candidateId: number) => {
       const { data, error } = await supabase
@@ -321,23 +437,72 @@ export const api = {
         company_email: (data.companies as any).email
       };
     },
-    apply: async (jobId: string, formData: any, resumeFile?: File) => {
-      // 1. Verify if candidate already applied for this job with this email
-      const { data: existingCandidate } = await supabase
-        .from('candidates')
-        .select('id')
-        .eq('job_id', parseInt(jobId))
-        .eq('email', formData.email)
-        .maybeSingle();
+    checkMyApplication: async (jobId: string) => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return false;
+        const role = await api.auth.getUserRole();
+        if (role !== 'candidate') return false;
 
-      if (existingCandidate) {
+        const { data: profile } = await supabase
+          .from('candidate_profiles')
+          .select('email')
+          .eq('id', user.id)
+          .single();
+
+        if (!profile) return false;
+
+        // Tentativa 1: RPC (bypassa o RLS para permitir a checagem)
+        const { data: hasApplied, error: rpcError } = await supabase.rpc('check_existing_application', {
+          p_job_id: parseInt(jobId),
+          p_email: profile.email
+        });
+
+        if (!rpcError) {
+          return !!hasApplied;
+        }
+
+        // Tentativa 2: Consulta padrão caso a RPC não tenha sido criada no banco
+        const { data: application } = await supabase
+          .from('candidates')
+          .select('id')
+          .eq('job_id', parseInt(jobId))
+          .eq('email', profile.email)
+          .maybeSingle();
+
+        return !!application;
+      } catch (err) {
+        return false;
+      }
+    },
+    apply: async (jobId: string, formData: any, resumeFile?: File, resumeUrlFromProfile?: string) => {
+      // 1. Verify if candidate already applied for this job with this email
+      // Tentativa 1: Via RPC para evitar falso negativo do RLS
+      const { data: hasApplied, error: rpcError } = await supabase.rpc('check_existing_application', {
+        p_job_id: parseInt(jobId),
+        p_email: formData.email
+      });
+
+      if (!rpcError && hasApplied) {
         throw new Error('Você já se candidatou à esta vaga. Aguarde o contato da empresa.');
+      } else if (rpcError) {
+        // Tentativa 2: Fallback padrão se não tiverem rodado o script SQL
+        const { data: existingCandidate } = await supabase
+          .from('candidates')
+          .select('id')
+          .eq('job_id', parseInt(jobId))
+          .eq('email', formData.email)
+          .maybeSingle();
+
+        if (existingCandidate) {
+          throw new Error('Você já se candidatou à esta vaga. Aguarde o contato da empresa.');
+        }
       }
 
       // 2. Fetch job and company info for notification
       const job = await api.jobs.get(jobId);
 
-      let resume_url = null;
+      let resume_url = resumeUrlFromProfile || null;
 
       if (resumeFile) {
         try {

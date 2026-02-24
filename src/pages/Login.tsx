@@ -19,7 +19,12 @@ export default function Login() {
     try {
       const data = await api.auth.login({ email, password });
       if (data.user) {
-        navigate('/company/dashboard');
+        const role = await api.auth.getUserRole();
+        if (role === 'candidate') {
+          navigate('/candidate/dashboard');
+        } else {
+          navigate('/company/dashboard');
+        }
       } else {
         setError('Erro ao fazer login');
       }
@@ -33,8 +38,8 @@ export default function Login() {
   return (
     <div className="max-w-md mx-auto py-12 space-y-8">
       <div className="text-center space-y-2">
-        <h1 className="text-3xl font-bold text-zinc-900 tracking-tight">Bem-vindo de volta</h1>
-        <p className="text-zinc-500">Acesse o painel da sua empresa para gerenciar vagas.</p>
+        <h1 className="text-3xl font-bold text-zinc-900 tracking-tight">Entrar no PortalEmprega</h1>
+        <p className="text-zinc-500">Acesse o seu painel de vagas.</p>
       </div>
 
       <div className="bg-white p-8 rounded-[2.5rem] border border-zinc-100 shadow-sm space-y-6">
@@ -85,9 +90,15 @@ export default function Login() {
           </button>
         </form>
 
-        <div className="text-center pt-4">
+        <div className="text-center pt-4 space-y-2">
           <p className="text-sm text-zinc-500">
-            Ainda não tem conta?{' '}
+            Você é um candidato?{' '}
+            <Link to="/signup-candidate" className="text-emerald-600 font-bold hover:underline">
+              Crie seu currículo
+            </Link>
+          </p>
+          <p className="text-sm text-zinc-500">
+            É uma empresa?{' '}
             <Link to="/signup" className="text-emerald-600 font-bold hover:underline">
               Cadastre sua empresa
             </Link>
