@@ -24,7 +24,7 @@ export default function Home() {
       {/* Hero Section */}
       <section className="relative py-20 overflow-hidden">
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(45%_45%_at_50%_50%,rgba(16,185,129,0.1)_0%,transparent_100%)]" />
-        
+
         <div className="text-center max-w-4xl mx-auto space-y-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -32,9 +32,9 @@ export default function Home() {
             className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-700 text-xs font-semibold uppercase tracking-wider"
           >
             <TrendingUp className="w-3 h-3" />
-            Plataforma #1 para Vagas SaaS
+            O seu portal completo de vagas
           </motion.div>
-          
+
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -44,14 +44,14 @@ export default function Home() {
             Encontre o seu próximo <br />
             <span className="text-emerald-600">desafio profissional</span>
           </motion.h1>
-          
+
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
             className="text-lg text-zinc-600 max-w-2xl mx-auto"
           >
-            Conectamos as melhores empresas aos talentos mais qualificados do mercado. 
+            Conectamos as melhores empresas aos talentos mais qualificados do mercado.
             Busca inteligente, candidaturas rápidas e gestão completa.
           </motion.p>
 
@@ -160,27 +160,53 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="bg-zinc-900 rounded-[2.5rem] p-12 md:p-20 text-center relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-600/20 blur-[100px] -mr-32 -mt-32" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-600/20 blur-[100px] -ml-32 -mb-32" />
-        
-        <div className="relative z-10 max-w-2xl mx-auto space-y-8">
-          <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight">
-            Sua empresa precisa dos <br />
-            <span className="text-emerald-500">melhores talentos?</span>
-          </h2>
-          <p className="text-zinc-400 text-lg">
-            Publique suas vagas agora mesmo e comece a receber currículos qualificados. 
-            Gestão completa de candidatos e dashboard analítico.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link to="/signup" className="w-full sm:w-auto bg-emerald-600 text-white px-8 py-4 rounded-2xl font-bold hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-900/20">
-              Começar Agora
-            </Link>
-            <Link to="/login" className="w-full sm:w-auto bg-white/10 text-white px-8 py-4 rounded-2xl font-bold hover:bg-white/20 transition-all backdrop-blur-sm">
-              Fazer Login
-            </Link>
+      {/* Dual CTA Section */}
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Candidate CTA */}
+        <div className="bg-emerald-600 rounded-[2.5rem] p-12 text-center relative overflow-hidden flex flex-col justify-center border border-emerald-500 shadow-xl shadow-emerald-900/10">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-400/30 blur-[100px] -mr-32 -mt-32" />
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-800/30 blur-[100px] -ml-32 -mb-32" />
+
+          <div className="relative z-10 space-y-8">
+            <h2 className="text-3xl md:text-4xl font-bold text-white tracking-tight leading-tight">
+              Procurando sua <br />
+              <span className="text-emerald-200">próxima oportunidade?</span>
+            </h2>
+            <p className="text-emerald-50 text-lg">
+              Cadastre seu currículo para que as melhores empresas encontrem seu perfil e entrem em contato diretamente com você.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+              <Link to="/signup-candidate" className="w-full sm:w-auto bg-white text-emerald-600 px-8 py-4 rounded-2xl font-bold hover:bg-zinc-50 transition-all shadow-lg active:scale-95">
+                Cadastrar Currículo
+              </Link>
+              <Link to="/jobs" className="w-full sm:w-auto bg-black/10 text-white px-8 py-4 rounded-2xl font-bold hover:bg-black/20 transition-all backdrop-blur-sm active:scale-95">
+                Navegar Vagas
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Company CTA */}
+        <div className="bg-zinc-900 rounded-[2.5rem] p-12 text-center relative overflow-hidden flex flex-col justify-center border border-zinc-800 shadow-xl">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-600/20 blur-[100px] -mr-32 -mt-32" />
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-600/20 blur-[100px] -ml-32 -mb-32" />
+
+          <div className="relative z-10 space-y-8">
+            <h2 className="text-3xl md:text-4xl font-bold text-white tracking-tight leading-tight">
+              Sua empresa precisa dos <br />
+              <span className="text-emerald-500">melhores talentos?</span>
+            </h2>
+            <p className="text-zinc-400 text-lg">
+              Publique suas vagas e utilize nosso banco com milhares de profissionais prontos para uma entrevista.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+              <Link to="/signup" className="w-full sm:w-auto bg-emerald-600 text-white px-8 py-4 rounded-2xl font-bold hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-900/20 active:scale-95">
+                Começar Agora
+              </Link>
+              <Link to="/login" className="w-full sm:w-auto bg-white/10 text-white px-8 py-4 rounded-2xl font-bold hover:bg-white/20 transition-all backdrop-blur-sm active:scale-95">
+                Fazer Login
+              </Link>
+            </div>
           </div>
         </div>
       </section>

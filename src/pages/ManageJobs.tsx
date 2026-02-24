@@ -82,7 +82,8 @@ export default function ManageJobs() {
                 <th className="px-8 py-5 text-xs font-bold text-zinc-400 uppercase tracking-wider">Vaga</th>
                 <th className="px-8 py-5 text-xs font-bold text-zinc-400 uppercase tracking-wider">Status</th>
                 <th className="px-8 py-5 text-xs font-bold text-zinc-400 uppercase tracking-wider">Candidatos</th>
-                <th className="px-8 py-5 text-xs font-bold text-zinc-400 uppercase tracking-wider">Data</th>
+                <th className="px-8 py-5 text-xs font-bold text-zinc-400 uppercase tracking-wider">Criada em</th>
+                <th className="px-8 py-5 text-xs font-bold text-zinc-400 uppercase tracking-wider">Data Limite</th>
                 <th className="px-8 py-5 text-xs font-bold text-zinc-400 uppercase tracking-wider text-right">Ações</th>
               </tr>
             </thead>
@@ -138,6 +139,9 @@ export default function ManageJobs() {
                   <td className="px-8 py-6 text-sm text-zinc-500">
                     {new Date(job.created_at).toLocaleDateString()}
                   </td>
+                  <td className="px-8 py-6 text-sm font-medium text-emerald-600">
+                    {job.deadline ? new Date(job.deadline).toLocaleDateString() : 'Não definida'}
+                  </td>
                   <td className="px-8 py-6 text-right">
                     <div className="flex items-center justify-end gap-2">
                       <button
@@ -150,9 +154,9 @@ export default function ManageJobs() {
                       >
                         {job.status === 'active' ? <PowerOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}
                       </button>
-                      <button className="p-2 bg-zinc-50 border border-zinc-200 text-zinc-600 rounded-xl hover:bg-zinc-100 transition-all">
+                      <Link to={`/company/jobs/${job.id}/edit`} className="p-2 inline-flex items-center justify-center bg-zinc-50 border border-zinc-200 text-zinc-600 rounded-xl hover:bg-zinc-100 transition-all">
                         <Edit className="w-4 h-4" />
-                      </button>
+                      </Link>
                     </div>
                   </td>
                 </tr>

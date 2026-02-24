@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
-  Briefcase, Users, CheckCircle, Clock, TrendingUp, 
-  PlusCircle, ArrowRight, Building2, Calendar, 
-  ChevronRight, AlertCircle 
+import {
+  Briefcase, Users, CheckCircle, Clock, TrendingUp,
+  PlusCircle, ArrowRight, Building2, Calendar,
+  ChevronRight, AlertCircle, Eye
 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, 
-  Tooltip, ResponsiveContainer, LineChart, Line, Cell 
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer, LineChart, Line, Cell
 } from 'recharts';
 import { api } from '../services/api';
 
@@ -94,12 +94,34 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {metrics?.globalCandidates > 0 && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-emerald-600/10 border border-emerald-500/20 text-emerald-800 p-6 rounded-3xl flex items-center justify-between shadow-sm"
+        >
+          <div className="flex items-center gap-4">
+            <div className="bg-white/80 p-3 rounded-2xl">
+              <Users className="w-6 h-6 text-emerald-600" />
+            </div>
+            <div>
+              <h3 className="font-bold text-lg">Comunidade Crescendo!</h3>
+              <p className="opacity-90 leading-snug font-medium text-emerald-900">
+                Temos atualmente <strong className="text-xl mx-0.5">{metrics.globalCandidates}</strong> pessoas cadastradas no PortalEmprega prontas para sua empresa.<br />
+                Publique suas vagas para aproveitar nossa base de talentos.
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       {/* Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
           { label: 'Total de Vagas', value: metrics.totalVagas, icon: Briefcase, color: 'bg-blue-50 text-blue-600' },
           { label: 'Vagas Ativas', value: metrics.vagasAtivas, icon: CheckCircle, color: 'bg-emerald-50 text-emerald-600' },
           { label: 'Total de Candidatos', value: metrics.totalCandidatos, icon: Users, color: 'bg-purple-50 text-purple-600' },
+          { label: 'Total de Visualizações', value: metrics.totalVisualizacoes, icon: Eye, color: 'bg-amber-50 text-amber-600' },
         ].map((metric, i) => (
           <motion.div
             key={i}
@@ -132,7 +154,7 @@ export default function Dashboard() {
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f4f4f5" />
                 <XAxis dataKey="title" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#71717a' }} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#71717a' }} />
-                <Tooltip 
+                <Tooltip
                   cursor={{ fill: '#f8fafc' }}
                   contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                 />
@@ -153,11 +175,55 @@ export default function Dashboard() {
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f4f4f5" />
                 <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#71717a' }} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#71717a' }} />
-                <Tooltip 
+                <Tooltip
                   contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                 />
                 <Line type="monotone" dataKey="count" stroke="#10b981" strokeWidth={3} dot={{ r: 4, fill: '#10b981' }} activeDot={{ r: 6 }} />
               </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Visualizações por Vaga */}
+        <div className="bg-white p-8 rounded-[2.5rem] border border-zinc-100 shadow-sm space-y-6">
+          <h3 className="text-xl font-bold text-zinc-900 flex items-center gap-2">
+            <Eye className="w-5 h-5 text-amber-600" /> Visualizações por Vaga
+          </h3>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={charts.visualizacoesPorVaga}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f4f4f5" />
+                <XAxis dataKey="title" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#71717a' }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#71717a' }} />
+                <Tooltip
+                  cursor={{ fill: '#f8fafc' }}
+                  contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                />
+                <Bar dataKey="views" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Entrevistas por Vaga */}
+        <div className="bg-white p-8 rounded-[2.5rem] border border-zinc-100 shadow-sm space-y-6">
+          <h3 className="text-xl font-bold text-zinc-900 flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-emerald-600" /> Entrevistas Agendadas por Vaga
+          </h3>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={charts.entrevistasPorVaga}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f4f4f5" />
+                <XAxis dataKey="title" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#71717a' }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#71717a' }} />
+                <Tooltip
+                  cursor={{ fill: '#f8fafc' }}
+                  contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                />
+                <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+              </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
@@ -175,7 +241,7 @@ export default function Dashboard() {
               Ver todas
             </Link>
           </div>
-          
+
           <div className="space-y-4">
             {interviews.length > 0 ? (
               interviews.map((interview: any) => (
@@ -234,6 +300,6 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 }

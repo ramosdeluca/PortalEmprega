@@ -202,6 +202,7 @@ export default function App() {
             <Route path="/company/subscription" element={<Subscription />} />
             <Route path="/company/dashboard" element={<Dashboard />} />
             <Route path="/company/jobs/new" element={<CreateJob />} />
+            <Route path="/company/jobs/:id/edit" element={<CreateJob />} />
             <Route path="/company/jobs" element={<ManageJobs />} />
             <Route path="/company/jobs/:id/candidates" element={<CandidateList />} />
             <Route path="/company/jobs/:id/potential-candidates" element={<PotentialCandidatesList />} />

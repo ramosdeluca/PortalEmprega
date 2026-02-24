@@ -1,5 +1,9 @@
 import { supabase } from './supabase';
 
+// Trava de memória para evitar contagem dupla do React StrictMode
+const pendingViews = new Set<string>();
+
+
 export const api = {
   auth: {
     login: async (data: any) => {
@@ -28,6 +32,7 @@ export const api = {
     },
     getUserRole: async () => {
       const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
       return user?.user_metadata?.role || 'company';
     },
     signOut: () => supabase.auth.signOut(),
@@ -179,6 +184,17 @@ export const api = {
         .select('*', { count: 'exact', head: true })
         .in('job_id', jobIds);
 
+      const { count: globalCandidates } = await supabase
+        .from('candidate_profiles')
+        .select('*', { count: 'exact', head: true });
+
+      const { data: viewsData } = await supabase
+        .from('jobs')
+        .select('views')
+        .eq('company_id', user.id);
+
+      const totalVisualizacoes = viewsData?.reduce((acc, job) => acc + (job.views || 0), 0) || 0;
+
       // Charts data
       const { data: candidatosPorVaga } = await supabase
         .from('jobs')
@@ -189,6 +205,41 @@ export const api = {
         title: j.title,
         count: (j as any).candidates[0].count
       })) || [];
+
+      // Visualizações por vaga
+      const { data: viewsPorVaga } = await supabase
+        .from('jobs')
+        .select('title, views')
+        .eq('company_id', user.id)
+        .order('views', { ascending: false })
+        .limit(10);
+
+      const formattedViewsPorVaga = viewsPorVaga?.map(j => ({
+        title: j.title,
+        views: j.views || 0
+      })) || [];
+
+      // Entrevistas por vaga
+      const { data: interviewsRawData } = await supabase
+        .from('interviews')
+        .select('candidates(jobs(title))')
+        .in('candidate_id', await (async () => {
+          const { data: c } = await supabase.from('candidates').select('id').in('job_id', jobIds);
+          return c?.map(c => c.id) || [];
+        })());
+
+      const interviewsCountByJob: Record<string, number> = {};
+      interviewsRawData?.forEach((item: any) => {
+        const title = item.candidates?.jobs?.title;
+        if (title) {
+          interviewsCountByJob[title] = (interviewsCountByJob[title] || 0) + 1;
+        }
+      });
+
+      const formattedInterviewsPorVaga = Object.keys(interviewsCountByJob).map(title => ({
+        title,
+        count: interviewsCountByJob[title]
+      }));
 
       // Upcoming interviews
       const { data: interviews } = await supabase
@@ -245,10 +296,14 @@ export const api = {
           totalVagas: totalVagas || 0,
           vagasAtivas: vagasAtivas || 0,
           totalCandidatos: totalCandidatos || 0,
+          totalVisualizacoes: totalVisualizacoes || 0,
+          globalCandidates: globalCandidates || 0
         },
         charts: {
           candidatosPorVaga: formattedCandidatosPorVaga,
-          candidatosPorPeriodo: formattedTrend
+          candidatosPorPeriodo: formattedTrend,
+          visualizacoesPorVaga: formattedViewsPorVaga,
+          entrevistasPorVaga: formattedInterviewsPorVaga
         },
         interviews: interviews?.map(i => ({
           id: i.id,
@@ -277,6 +332,20 @@ export const api = {
       const { data, error } = await supabase
         .from('jobs')
         .insert([{ ...jobData, company_id: user.id }])
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    updateJob: async (id: number | string, jobData: any) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { data, error } = await supabase
+        .from('jobs')
+        .update(jobData)
+        .eq('id', id)
+        .eq('company_id', user.id)
         .select()
         .single();
       if (error) throw error;
@@ -422,6 +491,37 @@ export const api = {
       }));
     },
     get: async (id: string) => {
+      // Registrar visualização evitando Race Conditions (React StrictMode renderiza 2x em paralelo)
+      const viewKey = `job_view_${id}`;
+      if (!pendingViews.has(viewKey)) {
+        // Bloqueio em memória (debounce de 2 segundos para double-renders)
+        pendingViews.add(viewKey);
+        const releaseLock = () => setTimeout(() => pendingViews.delete(viewKey), 2000);
+
+        api.auth.getUserRole().then(role => {
+          if (role !== 'company') {
+            (async () => {
+              try {
+                await supabase.rpc('increment_job_view', { job_id_param: parseInt(id) });
+              } finally {
+                releaseLock();
+              }
+            })();
+          } else {
+            releaseLock();
+          }
+        }).catch(() => {
+          // Fallback para deslogados (visitantes)
+          (async () => {
+            try {
+              await supabase.rpc('increment_job_view', { job_id_param: parseInt(id) });
+            } finally {
+              releaseLock();
+            }
+          })();
+        });
+      }
+
       const { data, error } = await supabase
         .from('jobs')
         .select('*, companies(name, logo_url, whatsapp, email)')
