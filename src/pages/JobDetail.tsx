@@ -71,10 +71,14 @@ export default function JobDetail() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 py-6 border-y border-zinc-100">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 py-6 border-y border-zinc-100">
               <div className="space-y-1">
                 <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Tipo</div>
                 <div className="text-sm font-bold text-zinc-900">{job.type}</div>
+              </div>
+              <div className="space-y-1">
+                <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Modelo</div>
+                <div className="text-sm font-bold text-zinc-900">{job.work_model || 'Não informado'}</div>
               </div>
               <div className="space-y-1">
                 <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Salário</div>

@@ -86,9 +86,9 @@ export default function CandidateDashboard() {
         setError('');
 
         try {
-            await api.candidate.uploadResume(file);
+            const updatedProfile = await api.candidate.uploadResume(file);
             setSuccess('Currículo atualizado com sucesso!');
-            await loadProfile();
+            setProfile(updatedProfile); // Only update the profile object, leaving form edits intact
         } catch (err: any) {
             console.error('Erro ao enviar currículo:', err);
             setError(err.message || 'Erro ao enviar o arquivo.');

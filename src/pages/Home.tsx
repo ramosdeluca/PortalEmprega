@@ -140,7 +140,12 @@ export default function Home() {
                 <div className="flex-1 space-y-1">
                   <div className="flex items-center justify-between">
                     <h3 className="font-bold text-zinc-900 group-hover:text-emerald-600 transition-colors">{job.title}</h3>
-                    <span className="text-xs font-medium px-2 py-1 bg-zinc-100 rounded-lg text-zinc-600">{job.type}</span>
+                    <div className="flex gap-2">
+                      <span className="text-xs font-medium px-2 py-1 bg-zinc-100 rounded-lg text-zinc-600">{job.type}</span>
+                      {job.work_model && (
+                        <span className="text-xs font-medium px-2 py-1 bg-emerald-50 text-emerald-700 rounded-lg border border-emerald-100">{job.work_model}</span>
+                      )}
+                    </div>
                   </div>
                   <p className="text-sm text-zinc-500 flex items-center gap-1">
                     <Building2 className="w-3 h-3" /> {job.company_name}

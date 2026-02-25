@@ -21,10 +21,12 @@ export interface Job {
   requirements: string;
   location: string;
   type: string;
+  work_model: string;
   salary: string;
   deadline: string;
   status: 'active' | 'closed';
   created_at: string;
+  candidatesCount?: number;
 }
 
 export interface Candidate {

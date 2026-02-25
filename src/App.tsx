@@ -11,6 +11,8 @@ import Apply from './pages/Apply';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import SignupCandidate from './pages/SignupCandidate';
+import ForgotPassword from './pages/ForgotPassword';
+import UpdatePassword from './pages/UpdatePassword';
 import Subscription from './pages/Subscription';
 import Dashboard from './pages/Dashboard';
 import CandidateDashboard from './pages/CandidateDashboard';
@@ -194,6 +196,8 @@ export default function App() {
             <Route path="/jobs/:id" element={<JobDetail />} />
             <Route path="/jobs/:id/apply" element={<Apply />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/update-password" element={<UpdatePassword />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/signup-candidate" element={<SignupCandidate />} />
 

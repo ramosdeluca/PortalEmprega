@@ -142,17 +142,24 @@ export default function JobList() {
                       <Building2 className="w-8 h-8 text-zinc-400" />
                     )}
                   </div>
-                  
+
                   <div className="flex-1 space-y-2">
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="text-lg font-bold text-zinc-900 group-hover:text-emerald-600 transition-colors">
                         {job.title}
                       </h3>
-                      <span className="px-2 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-bold uppercase tracking-wider rounded-lg">
-                        {job.type}
-                      </span>
+                      <div className="flex gap-2">
+                        <span className="px-2 py-1 bg-zinc-100 text-zinc-600 text-[10px] font-bold uppercase tracking-wider rounded-lg">
+                          {job.type}
+                        </span>
+                        {job.work_model && (
+                          <span className="px-2 py-1 bg-emerald-50 text-emerald-700 border border-emerald-100 text-[10px] font-bold uppercase tracking-wider rounded-lg">
+                            {job.work_model}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    
+
                     <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-zinc-500">
                       <span className="flex items-center gap-1.5">
                         <Building2 className="w-4 h-4" /> {job.company_name}
@@ -164,7 +171,7 @@ export default function JobList() {
                         <Briefcase className="w-4 h-4" /> {job.cbo_name}
                       </span>
                       <span className="flex items-center gap-1.5">
-                        <Clock className="w-4 h-4" /> 
+                        <Clock className="w-4 h-4" />
                         {new Date(job.created_at).toLocaleDateString()}
                       </span>
                     </div>

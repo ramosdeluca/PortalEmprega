@@ -35,6 +35,18 @@ export const api = {
       if (!user) return null;
       return user?.user_metadata?.role || 'company';
     },
+    resetPasswordForEmail: async (email: string) => {
+      const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/update-password`,
+      });
+      if (error) throw error;
+      return data;
+    },
+    updatePassword: async (password: string) => {
+      const { data, error } = await supabase.auth.updateUser({ password });
+      if (error) throw error;
+      return data;
+    },
     signOut: () => supabase.auth.signOut(),
   },
   candidate: {
@@ -319,11 +331,14 @@ export const api = {
       if (!user) return [];
       const { data, error } = await supabase
         .from('jobs')
-        .select('*')
+        .select('*, candidates(count)')
         .eq('company_id', user.id)
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return data;
+      return data.map((job: any) => ({
+        ...job,
+        candidatesCount: job.candidates?.[0]?.count || 0
+      }));
     },
     createJob: async (jobData: any) => {
       const { data: { user } } = await supabase.auth.getUser();

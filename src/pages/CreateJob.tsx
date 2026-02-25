@@ -28,6 +28,7 @@ export default function CreateJob() {
     requirements: '',
     location: '',
     type: 'Tempo Integral',
+    work_model: 'CLT',
     salary: '',
     deadline: '',
   });
@@ -49,6 +50,7 @@ export default function CreateJob() {
         requirements: data.requirements || '',
         location: data.location || '',
         type: data.type || 'Tempo Integral',
+        work_model: data.work_model || 'CLT',
         salary: data.salary || '',
         deadline: data.deadline || '',
       });
@@ -247,9 +249,24 @@ export default function CreateJob() {
                 >
                   <option>Tempo Integral</option>
                   <option>Meio Período</option>
-                  <option>PJ</option>
                   <option>Estágio</option>
                   <option>Freelance</option>
+                  <option>PJ</option>
+                  <option>Home Office</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-zinc-700">Tipo de Contrato</label>
+                <select
+                  className="w-full px-4 py-3 bg-zinc-50 border border-zinc-100 rounded-2xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all appearance-none"
+                  value={formData.work_model}
+                  onChange={(e) => setFormData({ ...formData, work_model: e.target.value })}
+                >
+                  <option>CLT</option>
+                  <option>PJ</option>
+                  <option>Freelancer</option>
+                  <option>Autônomo</option>
                 </select>
               </div>
 

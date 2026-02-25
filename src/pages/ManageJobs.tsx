@@ -93,8 +93,22 @@ export default function ManageJobs() {
                   <td className="px-8 py-6">
                     <div className="space-y-1">
                       <div className="font-bold text-zinc-900 group-hover:text-emerald-600 transition-colors">{job.title}</div>
-                      <div className="text-xs text-zinc-500 flex items-center gap-1">
-                        <Briefcase className="w-3 h-3" /> {job.cbo_name}
+                      <div className="flex flex-col gap-1.5 mt-1">
+                        <div className="text-xs text-zinc-500 flex items-center gap-1">
+                          <Briefcase className="w-3 h-3" /> {job.cbo_name}
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          {job.type && (
+                            <div className="text-[10px] font-bold text-zinc-600 bg-zinc-100 border border-zinc-200 rounded-lg px-2 py-0.5 w-fit uppercase tracking-wider">
+                              {job.type}
+                            </div>
+                          )}
+                          {job.work_model && (
+                            <div className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-lg px-2 py-0.5 w-fit uppercase tracking-wider">
+                              {job.work_model}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </td>
@@ -118,6 +132,9 @@ export default function ManageJobs() {
                       >
                         <Users className="w-4 h-4 text-zinc-400" />
                         Ver Candidatos
+                        <span className="bg-zinc-100 text-zinc-600 text-[10px] px-1.5 py-0.5 rounded-full">
+                          {job.candidatesCount || 0}
+                        </span>
                         <ChevronRight className="w-4 h-4" />
                       </Link>
 
